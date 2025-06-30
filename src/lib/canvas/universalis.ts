@@ -106,7 +106,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const itemName = itemInfo.Name;
     const itemNameFontSize = 28;
     ctx.fillStyle = getRarityColor(itemInfo.Rarity);
-    ctx.font = `${itemNameFontSize}px Arial, sans-serif`;
+    ctx.font = `${itemNameFontSize}px WenquanyiZhengHei, Georgia, Arial, sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemName,
@@ -119,8 +119,8 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     /* 写物品信息 */
     ctx.save();
     const itemDesc = `${itemInfo.ItemKind.Name} | ${itemInfo.ItemSearchCategory.Name} | 品级${itemInfo.LevelItem}`
-    ctx.fillStyle = "rgb(180, 180, 180)";
-    ctx.font = "18px Arial, sans-serif";
+    ctx.fillStyle = "rgb(120, 120, 120)"; // 更深的灰色，在白色背景上有更好对比度
+    ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemDesc,
@@ -138,8 +138,8 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const fetchTargetType: "region" | "dc" | "world" | "unknown" = saleInfo.worldName ? "world" : saleInfo.dcName ? "dc" : saleInfo.regionName ? "region" : "unknown";
     const fetchTargetName: string = (fetchTargetType === "world") ? saleInfo.worldName : (fetchTargetType === "dc") ? saleInfo.dcName : (fetchTargetType === "region") ? saleInfo.regionName : "未知";
     const itemLastUpdateDesc = `${fetchTargetName}${(fetchTargetType === "dc") ? "区" : ""} | 最后更新于${toCurrentTimeDifference(new Date(saleInfo.lastUploadTime), true)}（${new Date(saleInfo.lastUploadTime).toLocaleString("zh-CN", { hour12: false })}）`;
-    ctx.fillStyle = "rgb(180, 180, 180)";
-    ctx.font = "14px Arial, sans-serif";
+    ctx.fillStyle = "rgb(220, 220, 220)"; // 更亮的灰色，在渐变背景中部有更好可读性
+    ctx.font = "14px WenquanyiZhengHei, Georgia, Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemLastUpdateDesc,
@@ -158,7 +158,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "12px Arial, sans-serif";
+    ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
@@ -168,7 +168,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "9px Arial, sans-serif";
+    ctx.font = "9px Georgia, WenquanyiZhengHei, Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.textWrap = false;
@@ -246,8 +246,8 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         // "插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n" +
         "本插件作者（或开发团体）与cafemaker、universalis和《最终幻想14》的开发与发行公司无任何直接联系。\n" +
         "作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。"
-    ctx.fillStyle = "rgb(192, 192, 192)";
-    ctx.font = "10px Arial, sans-serif";
+    ctx.fillStyle = "rgb(160, 160, 160)"; // 更亮的灰色，在深色背景底部有更好可读性
+    ctx.font = "10px WenquanyiZhengHei, Georgia, Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
@@ -269,14 +269,14 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     
     // 预先计算文本高度来确定条目高度
     ctx.save();
-    ctx.font = "16px Arial, sans-serif";
-    const firstLineHeight = safeGetTextHeight(ctx.measureText("测试"), 16);
-    ctx.font = "14px Arial, sans-serif";
-    const secondLineHeight = safeGetTextHeight(ctx.measureText("测试"), 14);
+    ctx.font = "26px Georgia, WenquanyiZhengHei, Arial, sans-serif"; // 价格数字字体更大
+    const priceLineHeight = safeGetTextHeight(ctx.measureText("测试"), 26);
+    ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif"; // 服务器信息字体更小
+    const serverLineHeight = safeGetTextHeight(ctx.measureText("测试"), 12);
     ctx.restore();
     
-    // 动态计算每个条目的高度：第一行高度 + 间距 + 第二行高度 + 上下padding
-    const dynamicItemHeight = firstLineHeight + duration + secondLineHeight + duration * 2;
+    // 动态计算每个条目的高度：价格行高度 + 间距 + 服务器信息行高度 + 上下padding
+    const dynamicItemHeight = priceLineHeight + duration + serverLineHeight + duration * 2;
     
     for (let i = 0; i < saleInfo.listings.length && currentItemTop + dynamicItemHeight < listBottom; i++) {
         const item = saleInfo.listings[i];
@@ -289,41 +289,66 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         let drawPosLeft = left + duration;
         let drawPosTop = currentItemTop + duration;
         ctx.fillStyle = "rgb(255, 255, 255)";
-        ctx.font = "16px Arial, sans-serif";
         ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-        const itemPerPriceText = `${toReadableNum(item.pricePerUnit)}Gil/个`;
-        const itemPerPriceTextMeasure = ctx.measureText(itemPerPriceText);
-        const itemPerPriceTextWidth = itemPerPriceTextMeasure.width;
-        const itemPerPriceTextHeight = safeGetTextHeight(itemPerPriceTextMeasure, 16);
-        ctx.fillText(itemPerPriceText, drawPosLeft, drawPosTop);
-        drawPosLeft += itemPerPriceTextWidth;
+        ctx.textBaseline = "bottom";
+        
+        // 计算第一行的底部位置（价格行）
+        const priceLineBottom = drawPosTop + priceLineHeight;
+        
+        // 价格数字 - 最大最突出
+        ctx.font = "26px Georgia, WenquanyiZhengHei, Arial, sans-serif";
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        const priceNumber = `${toReadableNum(item.pricePerUnit)}`;
+        const priceNumberMeasure = ctx.measureText(priceNumber);
+        const priceNumberWidth = priceNumberMeasure.width;
+        const priceNumberHeight = safeGetTextHeight(priceNumberMeasure, 26);
+        ctx.fillText(priceNumber, drawPosLeft, priceLineBottom);
+        drawPosLeft += priceNumberWidth + duration / 2;
+        
+        // Gil单位 - 稍小字体，底部对齐
+        ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+        ctx.fillStyle = "rgb(220, 220, 220)";
+        const priceUnit = "Gil/个";
+        const priceUnitMeasure = ctx.measureText(priceUnit);
+        const priceUnitWidth = priceUnitMeasure.width;
+        ctx.fillText(priceUnit, drawPosLeft, priceLineBottom);
+        drawPosLeft += priceUnitWidth;
+        
+        // 重置为主要文字颜色，用于后续文字
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        const itemPerPriceTextHeight = priceNumberHeight;
         if (item.hq) {
+            // HQ图标位置需要调整到与文字底部对齐
             ctx.drawImage(hqImage,
-                drawPosLeft, drawPosTop,
+                drawPosLeft, priceLineBottom - itemPerPriceTextHeight,
                 itemPerPriceTextHeight, itemPerPriceTextHeight);
             drawPosLeft += itemPerPriceTextHeight;
         }
         drawPosLeft += duration;
 
+        // 数量文字 - 中等大小，底部对齐
+        ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
         const itemQuantityText = `${toReadableNum(item.quantity)}个`;
         const itemQuantityTextWidth = ctx.measureText(itemQuantityText).width;
-        ctx.fillText(itemQuantityText, drawPosLeft, drawPosTop);
+        ctx.fillText(itemQuantityText, drawPosLeft, priceLineBottom);
         drawPosLeft += itemQuantityTextWidth;
         drawPosLeft += duration;
 
+        // 总计文字 - 中等大小，底部对齐
         const itemTotalText = `共计${toReadableNum(item.total)}Gil`;
         const itemTotalTextWidth = ctx.measureText(itemTotalText).width;
-        ctx.fillText(itemTotalText, drawPosLeft, drawPosTop);
+        ctx.fillText(itemTotalText, drawPosLeft, priceLineBottom);
         drawPosLeft += itemTotalTextWidth;
         drawPosLeft += duration;
 
         drawPosLeft = left + duration;
-        drawPosTop = currentItemTop + itemPerPriceTextHeight + duration;
+        // 计算第二行的底部位置（服务器信息行）
+        const serverLineBottom = priceLineBottom + duration + serverLineHeight;
 
-        ctx.fillStyle = "rgb(192, 192, 192)";
-        ctx.font = "14px Arial, sans-serif";
-        ctx.fillText(`${item.worldName || ""} | ${item.retainerName} | 信息上传于${toCurrentTimeDifference(new Date(item.lastReviewTime * 1000), true)}（${new Date(item.lastReviewTime * 1000).toLocaleString("zh-CN", { hour12: false })}）`, drawPosLeft, drawPosTop)
+        // 服务器信息 - 最小字体，灰色显示，底部对齐
+        ctx.fillStyle = "rgb(200, 200, 200)"; // 更亮的灰色，在渐变条纹背景上有更好对比度
+        ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+        ctx.fillText(`${item.worldName || ""} | ${item.retainerName} | 信息上传于${toCurrentTimeDifference(new Date(item.lastReviewTime * 1000), true)}（${new Date(item.lastReviewTime * 1000).toLocaleString("zh-CN", { hour12: false })}）`, drawPosLeft, serverLineBottom)
 
         ctx.restore();
         currentItemTop += dynamicItemHeight + duration;
