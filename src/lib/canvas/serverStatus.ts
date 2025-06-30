@@ -5,6 +5,40 @@ import path from "path";
 import {__root_dir} from "../../index";
 import {roundRect} from "../util/canvas";
 
+// 安全地计算文本高度的辅助函数
+function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number {
+    try {
+        if (!measureResult) {
+            return fallbackFontSize;
+        }
+        
+        if (measureResult.lines && Array.isArray(measureResult.lines) && measureResult.lines.length > 0) {
+            const height = measureResult.lines
+                .map((l: any) => {
+                    if (l && typeof l.height === 'number' && l.height > 0) {
+                        return l.height;
+                    }
+                    return fallbackFontSize * 0.8;
+                })
+                .reduce((p: number, c: number) => p + c, 0);
+            
+            if (height > 0) {
+                return height;
+            }
+        }
+        
+        if (typeof measureResult.height === 'number' && measureResult.height > 0) {
+            return measureResult.height;
+        }
+        
+        return fallbackFontSize;
+        
+    } catch (error) {
+        console.error('Error calculating text height:', error);
+        return fallbackFontSize;
+    }
+}
+
 export async function drawServerStatus(serverStatus: ServerStatus[]) {
     const top = 16, bottom = 16,
         left = 16, right = 16,
@@ -13,13 +47,21 @@ export async function drawServerStatus(serverStatus: ServerStatus[]) {
     const maxServerCount: number = Math.max(...serverStatus.map(i => i.Group.length)),
           areaCardWidth: number = 280,
           areaCardTitleHeight: number = 72,
-          areaCardServerHeight: number = 56,
-          mainAreaWidth: number = Math.max(areaCardWidth * serverStatus.length + duration * (serverStatus.length - 1), areaCardWidth),
-          mainAreaHeight: number = areaCardTitleHeight + maxServerCount * areaCardServerHeight,
           titleHeight: number = 170,
           titleTextHeight: number = 120,
           announcementHeight: number = 120,
           iconHeight: number = 18;
+    
+    // 动态计算服务器条目高度
+    const canvas_temp = new Canvas(100, 100);
+    const ctx_temp = canvas_temp.getContext("2d");
+    ctx_temp.font = "18px simhei,Sans";
+    const serverTextHeight = safeGetTextHeight(ctx_temp.measureText("测试服务器"), 18);
+    // 服务器条目高度 = 文字高度 + 上下padding，确保图标也能正常显示
+    const areaCardServerHeight: number = Math.max(serverTextHeight + duration * 2, iconHeight + duration * 2);
+    
+    const mainAreaWidth: number = Math.max(areaCardWidth * serverStatus.length + duration * (serverStatus.length - 1), areaCardWidth),
+          mainAreaHeight: number = areaCardTitleHeight + maxServerCount * areaCardServerHeight;
 
     const drawAreaWidth = mainAreaWidth,
           drawAreaHeight = titleHeight + mainAreaHeight + announcementHeight;
@@ -190,8 +232,8 @@ export async function drawServerStatus(serverStatus: ServerStatus[]) {
     ctx.save();
     const announcement =
         `图片生成于${new Date().toLocaleString("zh-CN", { hour12: false })}，数据来源于盛趣官网（https://ff.web.sdo.com/）\n` +
-        "本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n" +
-        "插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n" +
+        // "本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n" +
+        // "插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n" +
         "本插件作者（或开发团体）与盛趣无任何直接联系。\n" +
         "作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。"
     ctx.fillStyle = "rgb(192, 192, 192)";

@@ -242,8 +242,8 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     ctx.save();
     const announcement =
         `图片生成于${new Date().toLocaleString("zh-CN", { hour12: false })}，物品数据来源于cafemaker，价格数据来源于universalis，\n` +
-        "本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n" +
-        "插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n" +
+        // "本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n" +
+        // "插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n" +
         "本插件作者（或开发团体）与cafemaker、universalis和《最终幻想14》的开发与发行公司无任何直接联系。\n" +
         "作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。"
     ctx.fillStyle = "rgb(192, 192, 192)";
@@ -259,18 +259,30 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     /* 写物品出售列表 */
     let currentItemTop = itemPriceCompareAreaTop + itemPriceCompareAreaHeight + duration;
     const listBottom = announcementTop - duration;
-    const itemHeight = 48;
+    // 移除固定的itemHeight，改为动态计算
     const nqItemLinearGrad = ctx.createLinearGradient(left, 0, left + drawAreaWidth, 0);
     nqItemLinearGrad.addColorStop(0, "rgba(64, 64, 64, 255)");
     nqItemLinearGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
     const hqItemLinearGrad = ctx.createLinearGradient(left, 0, left + drawAreaWidth, 0);
     hqItemLinearGrad.addColorStop(0, "rgba(152, 152, 64, 255)");
     hqItemLinearGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-    for (let i = 0; i < saleInfo.listings.length && currentItemTop + itemHeight < listBottom; i++) {
+    
+    // 预先计算文本高度来确定条目高度
+    ctx.save();
+    ctx.font = "16px Arial, sans-serif";
+    const firstLineHeight = safeGetTextHeight(ctx.measureText("测试"), 16);
+    ctx.font = "14px Arial, sans-serif";
+    const secondLineHeight = safeGetTextHeight(ctx.measureText("测试"), 14);
+    ctx.restore();
+    
+    // 动态计算每个条目的高度：第一行高度 + 间距 + 第二行高度 + 上下padding
+    const dynamicItemHeight = firstLineHeight + duration + secondLineHeight + duration * 2;
+    
+    for (let i = 0; i < saleInfo.listings.length && currentItemTop + dynamicItemHeight < listBottom; i++) {
         const item = saleInfo.listings[i];
         ctx.save();
         ctx.fillStyle = item.hq ? hqItemLinearGrad : nqItemLinearGrad;
-        ctx.fillRect(left, currentItemTop, drawAreaWidth, itemHeight);
+        ctx.fillRect(left, currentItemTop, drawAreaWidth, dynamicItemHeight);
         ctx.restore();
 
         ctx.save();
@@ -314,7 +326,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         ctx.fillText(`${item.worldName || ""} | ${item.retainerName} | 信息上传于${toCurrentTimeDifference(new Date(item.lastReviewTime * 1000), true)}（${new Date(item.lastReviewTime * 1000).toLocaleString("zh-CN", { hour12: false })}）`, drawPosLeft, drawPosTop)
 
         ctx.restore();
-        currentItemTop += itemHeight + duration;
+        currentItemTop += dynamicItemHeight + duration;
     }
 
     return canvas.toBuffer("png");

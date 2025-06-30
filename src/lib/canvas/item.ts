@@ -19,7 +19,6 @@ import { getOptimizedConfig, getExportOptions } from './config';
 // 安全地计算文本高度的辅助函数
 function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number {
     try {
-        console.log(`[DEBUG] measureResult:`, measureResult);
         
         // 优先使用 lines 数组
         if (measureResult && measureResult.lines && Array.isArray(measureResult.lines) && measureResult.lines.length > 0) {
@@ -32,19 +31,16 @@ function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number
             
             if (heights.length > 0) {
                 const totalHeight = heights.reduce((a: number, b: number) => a + b, 0);
-                console.log(`[DEBUG] Using lines array, totalHeight: ${totalHeight}`);
                 return totalHeight;
             }
         }
         
         // 回退到直接 height 属性
         if (measureResult && typeof measureResult.height === 'number' && !isNaN(measureResult.height) && measureResult.height > 0) {
-            console.log(`[DEBUG] Using direct height: ${measureResult.height}`);
             return measureResult.height;
         }
         
         // 最终回退到字体大小
-        console.log(`[DEBUG] Using fallback font size: ${fallbackFontSize}`);
         return fallbackFontSize;
         
     } catch (error) {
@@ -927,8 +923,8 @@ export async function drawItemInfo(
       `本图片生成于${new Date().toLocaleString('zh-CN', {
         hour12: false,
       })}，数据来源于Garland Tools国服版。\n` +
-      '本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n' +
-      '插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n' +
+      // '本功能来自插件（koishi-plugin-ffxiv），该插件基于koishi v3开发，\n' +
+      // '插件开源于：https://github.com/ReiKohaku/koishi-plugin-ffxiv。\n' +
       '本插件作者（或开发团体）与Garland Tools和《最终幻想14》的开发与发行公司无任何直接联系。\n' +
       '作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。';
     const announcementMeasure = ctx.measureText(
