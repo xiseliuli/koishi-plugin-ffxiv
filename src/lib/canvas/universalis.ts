@@ -1,4 +1,4 @@
-import {Canvas, loadImage, FontLibrary} from "skia-canvas";
+import { Context } from 'koishi';
 import {drawLegends} from "./Util";
 import {__root_dir} from "../../index";
 import * as path from "path";
@@ -6,10 +6,7 @@ import getRarityColor from "../util/getRarityColor";
 import {toCurrentTimeDifference, toReadableNum} from "../util/format";
 import {MarketBoardCurrentDataResponse} from "../API/universalis";
 
-if (!FontLibrary.has("Georgia")) FontLibrary.use("Georgia", path.join(__root_dir, "/public/fonts/Georgia.ttf"));
-if (!FontLibrary.has("WenquanyiZhengHei")) FontLibrary.use("WenquanyiZhengHei", path.join(__root_dir, "/public/fonts/WenquanyiZhengHei.ttf"));
-
-export async function drawItemPriceList(itemInfo: {
+export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     Name: string,
     Icon: string,
     LevelItem: number,
@@ -18,6 +15,10 @@ export async function drawItemPriceList(itemInfo: {
     Rarity: number,
     CanBeHq: number
 }, saleInfo: MarketBoardCurrentDataResponse): Promise<Buffer> {
+    const { Canvas, loadImage, FontLibrary } = koishiCtx.skia;
+    
+    if (!FontLibrary.has("Georgia")) FontLibrary.use("Georgia", path.join(__root_dir, "/public/fonts/Georgia.ttf"));
+    if (!FontLibrary.has("WenquanyiZhengHei")) FontLibrary.use("WenquanyiZhengHei", path.join(__root_dir, "/public/fonts/WenquanyiZhengHei.ttf"));
     const width = 720, height = 960;
     const top = 16, bottom = 16,
         left = 16, right = 16,
@@ -64,7 +65,7 @@ export async function drawItemPriceList(itemInfo: {
         left + iconSide + duration,
         top,
         drawAreaWidth - iconSide - duration);
-    const itemNameHeight = ctx.measureText(itemName).lines.map(l => l.height).reduce((p, c) => p + c);
+    const itemNameHeight = ctx.measureText(itemName).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
     ctx.restore();
 
     /* 写物品信息 */
@@ -78,7 +79,7 @@ export async function drawItemPriceList(itemInfo: {
         left + iconSide + duration,
         top + itemNameHeight + duration,
         drawAreaWidth - iconSide - duration);
-    const itemDescHeight = ctx.measureText(itemDesc).lines.map(l => l.height).reduce((p, c) => p + c);
+    const itemDescHeight = ctx.measureText(itemDesc).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
     ctx.restore();
 
     /* 计算顶部区域底部位置 */
@@ -97,7 +98,7 @@ export async function drawItemPriceList(itemInfo: {
         left,
         itemInfoAreaBottom + duration,
         drawAreaWidth - iconSide - duration);
-    const itemLastUpdateHeight = ctx.measureText(itemLastUpdateDesc).lines.map(l => l.height).reduce((p, c) => p + c);
+    const itemLastUpdateHeight = ctx.measureText(itemLastUpdateDesc).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
     ctx.restore();
 
     /* 画物品高低价比较 */
@@ -202,7 +203,7 @@ export async function drawItemPriceList(itemInfo: {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
-    const announcementHeight = ctx.measureText(announcement).lines.map(l => l.height).reduce((p, c) => p + c);
+    const announcementHeight = ctx.measureText(announcement).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
     const announcementTop = height - bottom - announcementHeight;
     ctx.fillText(announcement, left, announcementTop, drawAreaWidth);
     ctx.restore();
@@ -234,7 +235,7 @@ export async function drawItemPriceList(itemInfo: {
         const itemPerPriceText = `${toReadableNum(item.pricePerUnit)}Gil/个`;
         const itemPerPriceTextMeasure = ctx.measureText(itemPerPriceText);
         const itemPerPriceTextWidth = itemPerPriceTextMeasure.width;
-        const itemPerPriceTextHeight = itemPerPriceTextMeasure.lines.map(l => l.height).reduce((p, c) => p + c);
+        const itemPerPriceTextHeight = itemPerPriceTextMeasure.lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
         ctx.fillText(itemPerPriceText, drawPosLeft, drawPosTop);
         drawPosLeft += itemPerPriceTextWidth;
         if (item.hq) {

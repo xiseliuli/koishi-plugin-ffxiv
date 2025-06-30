@@ -4,9 +4,13 @@ import {drawItemPriceList} from "./lib/canvas/universalis";
 import {getItem, ItemBase, searchItem} from "./lib/API/xivapi";
 import itemAlias from "./lib/util/alias";
 import {toCurrentTimeDifference} from "./lib/util/format";
+import {bufferToImageSegment} from "./lib/canvas/Util";
 
 export interface Config {
     type?: 'text' | 'image'
+    canvas?: {
+        saveToLocal?: boolean
+    }
 }
 
 export function apply(ctx: Context, config: Config = { type: 'image' }) {
@@ -109,8 +113,9 @@ export function apply(ctx: Context, config: Config = { type: 'image' }) {
                 if (!saleInfo.listings.length) return `当前没有售卖${itemInfo.Name}${options.hq ? "HQ" : ""}的记录（最后更新于${toCurrentTimeDifference(new Date(saleInfo.lastUploadTime), true)}）。`
 
                 if (config.type === 'image') {
-                    const listImg: Buffer = await drawItemPriceList(itemInfo, saleInfo);
-                    return segment("image", { url: "base64://" + listImg.toString("base64") });
+                    const listImg: Buffer = await drawItemPriceList(ctx, itemInfo, saleInfo);
+                    const imageSegment = await bufferToImageSegment(listImg, 'png', config.canvas?.saveToLocal);
+                    return segment("image", imageSegment);
                 } else {
                     return (isGroupMsg ? "" : `${segment("image", {url: `https://cafemaker.wakingsands.com${item.Icon}`})}\r`) +
                         `[${item.LevelItem}]${item.Name}` +

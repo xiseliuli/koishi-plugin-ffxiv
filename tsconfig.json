@@ -6,7 +6,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
-    "watch": false,
     "rootDir": "./src",
     "outDir": "./build",
     "noImplicitAny": false

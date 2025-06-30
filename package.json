@@ -1,8 +1,7 @@
 {
-  "name": "koishi-plugin-ffxiv",
-  "version": "2.0.8",
+  "name": "@xise.liuli/koishi-plugin-ffxiv",
+  "version": "1.0.4",
   "description": "A Final Fantasy XIV helper plugin for koishi",
-  "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "typings": "build/index.d.ts",
@@ -17,11 +16,10 @@
     "public"
   ],
   "dependencies": {
-    "axios": "^0.24.0",
+    "axios": "^1.10.0",
     "leveldown": "^6.1.0",
     "levelup": "^5.1.1",
-    "rss-parser": "^3.12.0",
-    "skia-canvas": "^0.9.29"
+    "rss-parser": "^3.12.0"
   },
   "peerDependencies": {
     "koishi": "^4.11.9"
@@ -33,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ReiKohaku/koishi-plugin-ffxiv.git"
+    "url": "git+https://github.com/xiseliuli/koishi-plugin-ffxiv.git"
   },
   "keywords": [
     "ffxiv",
@@ -43,23 +41,30 @@
     "plugin"
   ],
   "author": {
-    "name": "ReiKohaku",
+    "name": "xiseliuli",
     "email": "hbsjzjwj@gmail.com",
-    "url": "https://github.com/ReiKohaku"
+    "url": "https://github.com/xiseliuli"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ReiKohaku/koishi-plugin-ffxiv/issues"
+    "url": "https://github.com/xiseliuli/koishi-plugin-ffxiv/issues"
   },
-  "homepage": "https://github.com/ReiKohaku/koishi-plugin-ffxiv#readme",
+  "homepage": "https://github.com/xiseliuli/koishi-plugin-ffxiv#readme",
   "publishConfig": {
     "access": "public"
   },
   "koishi": {
     "description": {
-      "zh": "一款基于koishi开发的包含许多常用功能的FF14插件",
-      "en": "A Final Fantasy XIV helper plugin for koishi"
+      "zh": "继续使用ReiKohaku的插件，并进行更新",
+      "en": "Continue using ReiKohaku's plugin and update it"
     },
-    "locales": ["zh"]
+    "locales": [
+      "zh"
+    ],
+    "service": {
+      "required": [
+        "skia"
+      ]
+    }
   }
 }
