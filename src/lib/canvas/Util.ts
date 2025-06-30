@@ -2,6 +2,48 @@ import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
 
+// 安全地计算文本高度的辅助函数
+function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number {
+    try {
+        // 如果 measureResult 不存在或异常，直接使用回退值
+        if (!measureResult) {
+            console.log(`Using fallback: ${fallbackFontSize} (no measureResult)`);
+            return fallbackFontSize;
+        }
+        
+        // 如果有 lines 属性且不为空，尝试计算
+        if (measureResult.lines && Array.isArray(measureResult.lines) && measureResult.lines.length > 0) {
+            const height = measureResult.lines
+                .map((l: any) => {
+                    if (l && typeof l.height === 'number' && l.height > 0) {
+                        return l.height;
+                    }
+                    return fallbackFontSize * 0.8; // 单行默认高度
+                })
+                .reduce((p: number, c: number) => p + c, 0);
+            
+            if (height > 0) {
+                console.log(`Text height from lines: ${height}`);
+                return height;
+            }
+        }
+        
+        // 尝试使用其他属性（某些 Canvas 实现可能有不同的属性）
+        if (typeof measureResult.height === 'number' && measureResult.height > 0) {
+            console.log(`Text height from height property: ${measureResult.height}`);
+            return measureResult.height;
+        }
+        
+        // 如果都失败了，使用回退值
+        console.log(`Using fallback: ${fallbackFontSize} (calculation failed)`);
+        return fallbackFontSize;
+        
+    } catch (error) {
+        console.error('Error calculating text height:', error);
+        return fallbackFontSize;
+    }
+}
+
 // 绘制性能监控
 export class DrawingPerformance {
     private static startTimes = new Map<string, number>();
@@ -52,7 +94,7 @@ export function drawText(
     const fontSize = parseInt(ctx.font) || 12;
     return {
         width: measure.width,
-        height: measure.lines ? measure.lines.map((l: any) => l.height).reduce((a: number, b: number) => a + b, 0) : fontSize
+        height: safeGetTextHeight(measure, fontSize)
     };
 }
 
@@ -110,17 +152,26 @@ export function drawLegends(
         const textWidth = textMeasureResult.width;
         // 新的 API 可能不支持 lines 属性，使用基本的高度估算
         const fontSize = parseInt(ctx.font) || 12;
-        const textHeight = textMeasureResult.lines ? textMeasureResult.lines.map((l: any) => l.height).reduce((p: number, c: number) => p + c) : fontSize;
+        const textHeight = safeGetTextHeight(textMeasureResult, fontSize);
         if (textWidth > maxTextWidth) maxTextWidth = textWidth;
         ctx.save();
         ctx.fillStyle = legend.color;
-        ctx.fillRect(x, y + areaHeight, legendWidth, legendHeight);
+        // 确保所有参数都是有效数字
+        const rectX = Number(x) || 0;
+        const rectY = Number(y + areaHeight) || 0;
+        const rectWidth = Number(legendWidth) || 0;
+        const rectHeight = Number(legendHeight) || 0;
+        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         ctx.restore();
 
         ctx.save();
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
-        ctx.fillText(legend.name, x + legendWidth + duration, y + areaHeight + legendHeight / 2, textWidth);
+        // 确保文本位置参数都是有效数字
+        const textX = Number(x + legendWidth + duration) || 0;
+        const textY = Number(y + areaHeight + legendHeight / 2) || 0;
+        const maxWidth = Number(textWidth) || undefined;
+        ctx.fillText(legend.name, textX, textY, maxWidth);
         ctx.restore();
 
         areaHeight += Math.max(textHeight, legendHeight) + duration;

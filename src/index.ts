@@ -40,7 +40,7 @@ export const schema = Schema.object({
       .description(
         '是否将生成的图片保存到本地文件。开启时使用文件路径发送，关闭时使用base64直接发送。'
       ),
-  }).default({ saveToLocal: false }).disabled,
+  }).default({ saveToLocal: false }),
 });
 
 export function apply(ctx: Context, options: Config = {}) {

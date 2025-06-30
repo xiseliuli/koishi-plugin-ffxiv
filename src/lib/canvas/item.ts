@@ -16,6 +16,43 @@ import {
 } from './Util';
 import { getOptimizedConfig, getExportOptions } from './config';
 
+// 安全地计算文本高度的辅助函数
+function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number {
+    try {
+        console.log(`[DEBUG] measureResult:`, measureResult);
+        
+        // 优先使用 lines 数组
+        if (measureResult && measureResult.lines && Array.isArray(measureResult.lines) && measureResult.lines.length > 0) {
+            const heights = measureResult.lines.map((l: any) => {
+                if (typeof l?.height === 'number' && !isNaN(l.height) && l.height > 0) {
+                    return l.height;
+                }
+                return fallbackFontSize; // 使用字体大小作为合理回退
+            });
+            
+            if (heights.length > 0) {
+                const totalHeight = heights.reduce((a: number, b: number) => a + b, 0);
+                console.log(`[DEBUG] Using lines array, totalHeight: ${totalHeight}`);
+                return totalHeight;
+            }
+        }
+        
+        // 回退到直接 height 属性
+        if (measureResult && typeof measureResult.height === 'number' && !isNaN(measureResult.height) && measureResult.height > 0) {
+            console.log(`[DEBUG] Using direct height: ${measureResult.height}`);
+            return measureResult.height;
+        }
+        
+        // 最终回退到字体大小
+        console.log(`[DEBUG] Using fallback font size: ${fallbackFontSize}`);
+        return fallbackFontSize;
+        
+    } catch (error) {
+        console.error(`[DEBUG] Error in safeGetTextHeight:`, error);
+        return fallbackFontSize;
+    }
+}
+
 // 图像缓存
 const imageCache = new Map<string, any>();
 
@@ -187,16 +224,14 @@ export async function drawItemInfo(
 
     ctx.save();
     ctx.fillStyle = getRarityColor(itemInfo.item.rarity);
-    ctx.font = '32px WenquanyiZhengHei,simhei,sans';
+    ctx.font = '32px Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     const itemNameMeasure = ctx.measureText(
       itemInfo.item.name,
       drawWidth - (drawPos[0] - left)
     );
-    const itemNameHeight = itemNameMeasure.lines
-      .map((l) => l.height)
-      .reduce((a, b) => a + b);
+    const itemNameHeight = safeGetTextHeight(itemNameMeasure, 32);
     ctx.fillText(
       itemInfo.item.name,
       drawPos[0],
@@ -204,13 +239,13 @@ export async function drawItemInfo(
       drawWidth - (drawPos[0] - left)
     );
     drawPos[1] +=
-      itemNameMeasure.lines.map((l) => l.height).reduce((a, b) => a + b) +
+      safeGetTextHeight(itemNameMeasure, 32) +
       duration;
     ctx.restore();
 
     ctx.save();
     ctx.fillStyle = '#AAAAAA';
-    ctx.font = '18px Georgia,WenquanyiZhengHei,simhei,sans';
+    ctx.font = '18px Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     const itemInfoText = `品级${itemInfo.item.ilvl} | ${
@@ -220,9 +255,7 @@ export async function drawItemInfo(
       itemInfoText,
       drawWidth - (drawPos[0] - left)
     );
-    const itemInfoTextHeight = itemInfoTextMeasure.lines
-      .map((l) => l.height)
-      .reduce((a, b) => a + b);
+    const itemInfoTextHeight = safeGetTextHeight(itemInfoTextMeasure, 18);
     ctx.fillText(
       itemInfoText,
       drawPos[0],
@@ -234,7 +267,7 @@ export async function drawItemInfo(
 
     ctx.save();
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '15px WenquanyiZhengHei,simhei,sans';
+    ctx.font = '15px Arial, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.textWrap = true;
@@ -246,9 +279,7 @@ export async function drawItemInfo(
       itemInfo.item.description,
       drawWidth - (drawPos[0] - left)
     );
-    const itemDescHeight = itemDescMeasure.lines
-      .map((l) => l.height)
-      .reduce((a, b) => a + b);
+    const itemDescHeight = safeGetTextHeight(itemDescMeasure, 15);
     ctx.fillText(
       itemInfo.item.description,
       drawPos[0],
@@ -270,15 +301,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#C0AE43';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '24px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '24px Arial, sans-serif';
       const craftTitle = '制作配方';
       const craftTitleMeasure = ctx.measureText(
         craftTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const craftTitleHeight = craftTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const craftTitleHeight = safeGetTextHeight(craftTitleMeasure, 24);
       ctx.fillText(craftTitle, drawPos[0], drawPos[1]);
       drawPos[1] += craftTitleHeight + duration;
       ctx.restore();
@@ -298,7 +327,7 @@ export async function drawItemInfo(
 
         ctx.save();
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '16px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '16px Arial, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         const ingredientTitle = `${job.name}  Lv.${craft.lvl}  配方等级${craft.rlvl}`;
@@ -306,16 +335,14 @@ export async function drawItemInfo(
           ingredientTitle,
           drawWidth - (drawPos[0] - left)
         );
-        const ingredientTitleHeight = ingredientTitleMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const ingredientTitleHeight = safeGetTextHeight(ingredientTitleMeasure, 16);
         ctx.fillText(ingredientTitle, drawPos[0], drawPos[1]);
         drawPos[1] += ingredientTitleHeight + duration;
         ctx.restore();
 
         ctx.save();
         ctx.fillStyle = '#A1B2D3';
-        ctx.font = '14px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '14px Arial, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         const ingredientInfo = `耐久${craft.durability}  进展${craft.progress}  品质${craft.quality}`;
@@ -323,9 +350,7 @@ export async function drawItemInfo(
           ingredientInfo,
           drawWidth - (drawPos[0] - left)
         );
-        const ingredientInfoHeight = ingredientInfoMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const ingredientInfoHeight = safeGetTextHeight(ingredientInfoMeasure, 14);
         ctx.fillText(ingredientInfo, drawPos[0], drawPos[1]);
         drawPos[1] += ingredientInfoHeight + duration;
         ctx.restore();
@@ -342,14 +367,12 @@ export async function drawItemInfo(
 
           ctx.save();
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+          ctx.font = '12px Arial, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           const ingredientName = `${ingredient.name}×${craftItem.amount}`;
           const ingredientNameMeasure = ctx.measureText(ingredientName);
-          const ingredientNameHeight = ingredientNameMeasure.lines
-            .map((l) => l.height)
-            .reduce((a, b) => a + b);
+          const ingredientNameHeight = safeGetTextHeight(ingredientNameMeasure, 12);
           ctx.drawImage(
             ingredient_icon,
             drawPos[0],
@@ -385,15 +408,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#C0AE43';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '24px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '24px Arial, sans-serif';
       const shopTitle = '商店购买';
       const shopsTitleMeasure = ctx.measureText(
         shopTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const shopsTitleHeight = shopsTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const shopsTitleHeight = safeGetTextHeight(shopsTitleMeasure, 24);
       ctx.fillText(shopTitle, drawPos[0], drawPos[1]);
       drawPos[1] += shopsTitleHeight + duration;
       ctx.restore();
@@ -404,15 +425,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '18px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '18px Arial, sans-serif';
       const priceTitle = `该物品在商店购买的价格为${itemInfo.item.price}`;
       const priceTitleMeasure = ctx.measureText(
         priceTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const priceTitleHeight = priceTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const priceTitleHeight = safeGetTextHeight(priceTitleMeasure, 18);
       ctx.fillText(priceTitle, drawPos[0], drawPos[1]);
       drawPos[0] += priceTitleMeasure.width;
       ctx.drawImage(
@@ -434,7 +453,7 @@ export async function drawItemInfo(
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.font = '15px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '15px Arial, sans-serif';
         const shopNpcs = itemInfo.item.vendors.map((n) => {
           for (const i in itemInfo.partials)
             if (
@@ -450,14 +469,12 @@ export async function drawItemInfo(
           const tradeShopNameMeasure = ctx.measureText(tradeShopName);
           ctx.fillText(tradeShopName, drawPos[0], drawPos[1]);
           drawPos[0] += tradeShopNameMeasure.width + duration;
-          drawPos[1] += tradeShopNameMeasure.lines
-            .map((l) => l.height)
-            .reduce((a, b) => a + b);
+          drawPos[1] += safeGetTextHeight(tradeShopNameMeasure, 15);
 
           ctx.save();
           ctx.fillStyle = '#BBBBBB';
           ctx.textBaseline = 'bottom';
-          ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+          ctx.font = '12px Arial, sans-serif';
           const location = n.a
             ? getLocationIndex(n.a as number)
             : { name: '未知区域' };
@@ -484,15 +501,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#C0AE43';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '24px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '24px Arial, sans-serif';
       const ventureTitle = '雇员探险';
       const ventureTitleMeasure = ctx.measureText(
         ventureTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const ventureTitleHeight = ventureTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const ventureTitleHeight = safeGetTextHeight(ventureTitleMeasure, 24);
       ctx.fillText(ventureTitle, drawPos[0], drawPos[1]);
       drawPos[1] += ventureTitleHeight + duration;
       ctx.restore();
@@ -503,15 +518,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '18px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '18px Arial, sans-serif';
       const ventureDesc = `该物品可通过雇员探险获得。`;
       const ventureDescMeasure = ctx.measureText(
         ventureDesc,
         drawWidth - (drawPos[0] - left)
       );
-      const ventureDescHeight = ventureDescMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const ventureDescHeight = safeGetTextHeight(ventureDescMeasure, 18);
       ctx.fillText(ventureDesc, drawPos[0], drawPos[1]);
       drawPos[0] += ventureDescMeasure.width;
       drawPos[1] += ventureDescHeight + duration;
@@ -527,12 +540,10 @@ export async function drawItemInfo(
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.font = '15px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '15px Arial, sans-serif';
         const ventureName = venture.name || `筹集委托：${itemInfo.item.name}`;
         const ventureNameMeasure = ctx.measureText(ventureName);
-        const ventureNameHeight = ventureNameMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const ventureNameHeight = safeGetTextHeight(ventureNameMeasure, 15);
         ctx.fillText(ventureName, drawPos[0], drawPos[1]);
         drawPos[1] += ventureNameHeight;
         ctx.restore();
@@ -541,12 +552,10 @@ export async function drawItemInfo(
         ctx.fillStyle = '#AAAAAA';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '12px Arial, sans-serif';
         const jobName = `${jobCategories.name}（需要${venture.cost}枚探险币）`;
         const jobNameMeasure = ctx.measureText(jobName);
-        const jobNameHeight = jobNameMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const jobNameHeight = safeGetTextHeight(jobNameMeasure, 12);
         ctx.fillText(jobName, drawPos[0], drawPos[1]);
         drawPos[1] += jobNameHeight + duration;
         ctx.restore();
@@ -561,35 +570,27 @@ export async function drawItemInfo(
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '12px Arial, sans-serif';
         const attrNameMeasure = ctx.measureText(attrName);
-        const attrNameHeight = attrNameMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const attrNameHeight = safeGetTextHeight(attrNameMeasure, 12);
         ctx.fillText(attrName, drawPos[0], drawPos[1]);
 
         drawPos[0] += drawWidth / 4;
         const amountTitle = venture.random ? '物品' : '个数';
         const amountMeasure = ctx.measureText(amountTitle);
-        const amountHeight = amountMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const amountHeight = safeGetTextHeight(amountMeasure, 12);
         ctx.fillText(amountTitle, drawPos[0], drawPos[1]);
 
         drawPos[0] += drawWidth / 4;
         const lvlTitle = '等级';
         const lvlMeasure = ctx.measureText(lvlTitle);
-        const lvlHeight = lvlMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const lvlHeight = safeGetTextHeight(lvlMeasure, 12);
         ctx.fillText(lvlTitle, drawPos[0], drawPos[1]);
 
         drawPos[0] += drawWidth / 4;
         const timeTitle = '时间';
         const timeMeasure = ctx.measureText(timeTitle);
-        const timeHeight = timeMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const timeHeight = safeGetTextHeight(timeMeasure, 12);
         ctx.fillText(timeTitle, drawPos[0], drawPos[1]);
         drawPos[1] += Math.max(
           attrNameHeight,
@@ -603,17 +604,11 @@ export async function drawItemInfo(
         const endPos = [drawPos[0], drawPos[1]];
         for (let i = 0; i < attr.length; i++) {
           drawPos[0] = left;
-          const attrHeight = ctx
-            .measureText(`${attr[i]}`)
-            .lines.map((l) => l.height)
-            .reduce((a, b) => a + b);
+          const attrHeight = safeGetTextHeight(ctx.measureText(`${attr[i]}`), 12);
           ctx.fillText(`${attr[i]}`, drawPos[0], drawPos[1]);
           drawPos[0] = left + drawWidth / 4;
           const amount = venture.amounts ? `${venture.amounts[i]}` : '随机物品';
-          const amountHeight = ctx
-            .measureText(amount)
-            .lines.map((l) => l.height)
-            .reduce((a, b) => a + b);
+          const amountHeight = safeGetTextHeight(ctx.measureText(amount), 12);
           ctx.fillText(`×${amount}`, drawPos[0], drawPos[1]);
           drawPos[1] += Math.max(attrHeight, amountHeight);
         }
@@ -627,17 +622,11 @@ export async function drawItemInfo(
         ) {
           drawPos[0] = left + (drawWidth / 4) * 2;
           const lvl = venture.lvl + i * 10;
-          const lvlHeight = ctx
-            .measureText(`${lvl}`)
-            .lines.map((l) => l.height)
-            .reduce((a, b) => a + b);
+          const lvlHeight = safeGetTextHeight(ctx.measureText(`${lvl}`), 12);
           ctx.fillText(`${lvl}`, drawPos[0], drawPos[1]);
           drawPos[0] = left + (drawWidth / 4) * 3;
           const time = `${toReadableTime((venture.minutes - i * 10) * 60)}`;
-          const timeHeight = ctx
-            .measureText(time)
-            .lines.map((l) => l.height)
-            .reduce((a, b) => a + b);
+          const timeHeight = safeGetTextHeight(ctx.measureText(time), 12);
           ctx.fillText(`${time}`, drawPos[0], drawPos[1]);
           drawPos[1] += Math.max(lvlHeight, timeHeight);
           if (venture.random) break;
@@ -660,15 +649,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#C0AE43';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '24px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '24px Arial, sans-serif';
       const tradeShopsTitle = '商店兑换';
       const tradeShopsTitleMeasure = ctx.measureText(
         tradeShopsTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const tradeShopsTitleHeight = tradeShopsTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const tradeShopsTitleHeight = safeGetTextHeight(tradeShopsTitleMeasure, 24);
       ctx.fillText(tradeShopsTitle, drawPos[0], drawPos[1]);
       drawPos[1] += tradeShopsTitleHeight + duration;
       ctx.restore();
@@ -679,7 +666,7 @@ export async function drawItemInfo(
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.font = '15px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '15px Arial, sans-serif';
         const tradeShopNpc = (() => {
           if (!s.npcs.length) return [{ n: '未知NPC', a: 0, c: [0, 0] }];
           return s.npcs.map((n) => {
@@ -698,14 +685,12 @@ export async function drawItemInfo(
           const tradeShopNameMeasure = ctx.measureText(tradeShopName);
           ctx.fillText(tradeShopName, drawPos[0], drawPos[1]);
           drawPos[0] += tradeShopNameMeasure.width + duration;
-          drawPos[1] += tradeShopNameMeasure.lines
-            .map((l) => l.height)
-            .reduce((a, b) => a + b);
+          drawPos[1] += safeGetTextHeight(tradeShopNameMeasure, 15);
 
           ctx.save();
           ctx.fillStyle = '#BBBBBB';
           ctx.textBaseline = 'bottom';
-          ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+          ctx.font = '12px Arial, sans-serif';
           const area = n.a
             ? getLocationIndex(n.a as number)
             : { name: '未知区域' };
@@ -752,14 +737,12 @@ export async function drawItemInfo(
               (tinyIconHeight / icon.height) * icon.width + duration;
             drawPos[1] += tinyIconHeight / 2;
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+            ctx.font = '12px Arial, sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             const iNameText = `${listItem.n}`;
             const iNameTextMeasure = ctx.measureText(iNameText);
-            const iNameTextHeight = iNameTextMeasure.lines
-              .map((l) => l.height)
-              .reduce((a, b) => a + b);
+            const iNameTextHeight = safeGetTextHeight(iNameTextMeasure, 12);
             ctx.fillText(iNameText, drawPos[0], drawPos[1]);
             drawPos[0] += iNameTextMeasure.width;
 
@@ -799,14 +782,12 @@ export async function drawItemInfo(
                 : findItemPartial(c.id);
             /* 从右往左画 */
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+            ctx.font = '12px Arial, sans-serif';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
             const cNameText = `${listItem.n}`;
             const cNameTextMeasure = ctx.measureText(cNameText);
-            const cNameTextHeight = cNameTextMeasure.lines
-              .map((l) => l.height)
-              .reduce((a, b) => a + b);
+            const cNameTextHeight = safeGetTextHeight(cNameTextMeasure, 12);
 
             const icon = await loadImageCached(
               `https://garlandtools.cn/files/icons/item/${
@@ -871,15 +852,13 @@ export async function drawItemInfo(
       ctx.fillStyle = '#C0AE43';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = '24px Georgia,WenquanyiZhengHei,simhei,sans';
+      ctx.font = '24px Arial, sans-serif';
       const ingredientOfTitle = '用于制作';
       const ingredientOfTitleMeasure = ctx.measureText(
         ingredientOfTitle,
         drawWidth - (drawPos[0] - left)
       );
-      const ingredientOfTitleHeight = ingredientOfTitleMeasure.lines
-        .map((l) => l.height)
-        .reduce((a, b) => a + b);
+      const ingredientOfTitleHeight = safeGetTextHeight(ingredientOfTitleMeasure, 24);
       ctx.fillText(ingredientOfTitle, drawPos[0], drawPos[1]);
       drawPos[1] += ingredientOfTitleHeight + duration;
       ctx.restore();
@@ -894,15 +873,13 @@ export async function drawItemInfo(
 
         ctx.save();
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+        ctx.font = '12px Arial, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         const targetItemNameMeasure = ctx.measureText(
           target_icon_partial.n as string
         );
-        const targetItemNameHeight = targetItemNameMeasure.lines
-          .map((l) => l.height)
-          .reduce((a, b) => a + b);
+        const targetItemNameHeight = safeGetTextHeight(targetItemNameMeasure, 12);
         ctx.drawImage(
           target_item_icon,
           drawPos[0],
@@ -944,7 +921,7 @@ export async function drawItemInfo(
     ctx.fillStyle = 'rgb(192, 192, 192)';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.font = '12px Georgia,WenquanyiZhengHei,simhei,sans';
+    ctx.font = '12px Arial, sans-serif';
     ctx.textWrap = true;
     const announcement =
       `本图片生成于${new Date().toLocaleString('zh-CN', {
@@ -958,9 +935,7 @@ export async function drawItemInfo(
       announcement,
       drawWidth - (drawPos[0] - left)
     );
-    const announcementHeight = announcementMeasure.lines
-      .map((l) => l.height)
-      .reduce((a, b) => a + b);
+    const announcementHeight = safeGetTextHeight(announcementMeasure, 12);
     ctx.fillText(announcement, drawPos[0], drawPos[1]);
     drawPos[1] += announcementHeight + duration;
     ctx.restore();

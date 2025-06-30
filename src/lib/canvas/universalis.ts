@@ -6,6 +6,54 @@ import getRarityColor from "../util/getRarityColor";
 import {toCurrentTimeDifference, toReadableNum} from "../util/format";
 import {MarketBoardCurrentDataResponse} from "../API/universalis";
 
+// 安全地计算文本高度的辅助函数
+function safeGetTextHeight(measureResult: any, fallbackFontSize: number): number {
+    try {
+        // 如果 measureResult 不存在或异常，直接使用回退值
+        if (!measureResult) {
+            console.log(`Using fallback: ${fallbackFontSize} (no measureResult)`);
+            return fallbackFontSize;
+        }
+        
+        // 如果有 lines 属性且不为空，尝试计算
+        if (measureResult.lines && Array.isArray(measureResult.lines) && measureResult.lines.length > 0) {
+            const height = measureResult.lines
+                .map((l: any) => {
+                    if (l && typeof l.height === 'number' && l.height > 0) {
+                        return l.height;
+                    }
+                    return fallbackFontSize * 0.8; // 单行默认高度
+                })
+                .reduce((p: number, c: number) => p + c, 0);
+            
+            if (height > 0) {
+                console.log(`Text height from lines: ${height}`);
+                return height;
+            }
+        }
+        
+        // 尝试使用其他属性（某些 Canvas 实现可能有不同的属性）
+        if (typeof measureResult.height === 'number' && measureResult.height > 0) {
+            console.log(`Text height from height property: ${measureResult.height}`);
+            return measureResult.height;
+        }
+        
+        // 如果都失败了，使用回退值
+        console.log(`Using fallback: ${fallbackFontSize} (calculation failed)`);
+        return fallbackFontSize;
+        
+    } catch (error) {
+        console.error('Error calculating text height:', error);
+        return fallbackFontSize;
+    }
+}
+
+// 从字体字符串中提取字体大小
+function extractFontSize(fontString: string): number {
+    const match = fontString.match(/(\d+)px/);
+    return match ? parseInt(match[1]) : 12;
+}
+
 export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     Name: string,
     Icon: string,
@@ -58,28 +106,28 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const itemName = itemInfo.Name;
     const itemNameFontSize = 28;
     ctx.fillStyle = getRarityColor(itemInfo.Rarity);
-    ctx.font = `${itemNameFontSize}px Georgia,WenquanyiZhengHei,simhei,Sans`;
+    ctx.font = `${itemNameFontSize}px Arial, sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemName,
         left + iconSide + duration,
         top,
         drawAreaWidth - iconSide - duration);
-    const itemNameHeight = ctx.measureText(itemName).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
+    const itemNameHeight = safeGetTextHeight(ctx.measureText(itemName), itemNameFontSize);
     ctx.restore();
 
     /* 写物品信息 */
     ctx.save();
     const itemDesc = `${itemInfo.ItemKind.Name} | ${itemInfo.ItemSearchCategory.Name} | 品级${itemInfo.LevelItem}`
     ctx.fillStyle = "rgb(180, 180, 180)";
-    ctx.font = "18px Georgia,WenquanyiZhengHei,simhei,Sans";
+    ctx.font = "18px Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemDesc,
         left + iconSide + duration,
         top + itemNameHeight + duration,
         drawAreaWidth - iconSide - duration);
-    const itemDescHeight = ctx.measureText(itemDesc).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
+    const itemDescHeight = safeGetTextHeight(ctx.measureText(itemDesc), 18);
     ctx.restore();
 
     /* 计算顶部区域底部位置 */
@@ -91,14 +139,14 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const fetchTargetName: string = (fetchTargetType === "world") ? saleInfo.worldName : (fetchTargetType === "dc") ? saleInfo.dcName : (fetchTargetType === "region") ? saleInfo.regionName : "未知";
     const itemLastUpdateDesc = `${fetchTargetName}${(fetchTargetType === "dc") ? "区" : ""} | 最后更新于${toCurrentTimeDifference(new Date(saleInfo.lastUploadTime), true)}（${new Date(saleInfo.lastUploadTime).toLocaleString("zh-CN", { hour12: false })}）`;
     ctx.fillStyle = "rgb(180, 180, 180)";
-    ctx.font = "14px Georgia,WenquanyiZhengHei,simhei,Sans";
+    ctx.font = "14px Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemLastUpdateDesc,
         left,
         itemInfoAreaBottom + duration,
         drawAreaWidth - iconSide - duration);
-    const itemLastUpdateHeight = ctx.measureText(itemLastUpdateDesc).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
+    const itemLastUpdateHeight = safeGetTextHeight(ctx.measureText(itemLastUpdateDesc), 14);
     ctx.restore();
 
     /* 画物品高低价比较 */
@@ -110,7 +158,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "12px Georgia,WenquanyiZhengHei,simhei,Sans";
+    ctx.font = "12px Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
@@ -120,7 +168,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "9px Georgia,WenquanyiZhengHei,Sans";
+    ctx.font = "9px Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.textWrap = false;
@@ -199,11 +247,11 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         "本插件作者（或开发团体）与cafemaker、universalis和《最终幻想14》的开发与发行公司无任何直接联系。\n" +
         "作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。"
     ctx.fillStyle = "rgb(192, 192, 192)";
-    ctx.font = "10px Georgia,WenquanyiZhengHei,simhei,Sans";
+    ctx.font = "10px Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
-    const announcementHeight = ctx.measureText(announcement).lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
+    const announcementHeight = safeGetTextHeight(ctx.measureText(announcement), 10);
     const announcementTop = height - bottom - announcementHeight;
     ctx.fillText(announcement, left, announcementTop, drawAreaWidth);
     ctx.restore();
@@ -229,13 +277,13 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         let drawPosLeft = left + duration;
         let drawPosTop = currentItemTop + duration;
         ctx.fillStyle = "rgb(255, 255, 255)";
-        ctx.font = "16px Georgia,WenquanyiZhengHei,simhei,Sans";
+        ctx.font = "16px Arial, sans-serif";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         const itemPerPriceText = `${toReadableNum(item.pricePerUnit)}Gil/个`;
         const itemPerPriceTextMeasure = ctx.measureText(itemPerPriceText);
         const itemPerPriceTextWidth = itemPerPriceTextMeasure.width;
-        const itemPerPriceTextHeight = itemPerPriceTextMeasure.lines.map(l => l.height || 0).reduce((p, c) => p + c, 0);
+        const itemPerPriceTextHeight = safeGetTextHeight(itemPerPriceTextMeasure, 16);
         ctx.fillText(itemPerPriceText, drawPosLeft, drawPosTop);
         drawPosLeft += itemPerPriceTextWidth;
         if (item.hq) {
@@ -262,7 +310,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         drawPosTop = currentItemTop + itemPerPriceTextHeight + duration;
 
         ctx.fillStyle = "rgb(192, 192, 192)";
-        ctx.font = "14px Georgia,WenquanyiZhengHei,simhei,Sans";
+        ctx.font = "14px Arial, sans-serif";
         ctx.fillText(`${item.worldName || ""} | ${item.retainerName} | 信息上传于${toCurrentTimeDifference(new Date(item.lastReviewTime * 1000), true)}（${new Date(item.lastReviewTime * 1000).toLocaleString("zh-CN", { hour12: false })}）`, drawPosLeft, drawPosTop)
 
         ctx.restore();
