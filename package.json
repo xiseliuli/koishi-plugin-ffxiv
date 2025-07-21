@@ -1,6 +1,6 @@
 {
   "name": "@xise.liuli/koishi-plugin-ffxiv",
-  "version": "1.0.10",
+  "version": "1.0.14",
   "description": "A Final Fantasy XIV helper plugin for koishi",
   "main": "build/index.js",
   "types": "build/index.d.ts",

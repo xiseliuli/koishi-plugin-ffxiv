@@ -54,6 +54,10 @@ function extractFontSize(fontString: string): number {
     return match ? parseInt(match[1]) : 12;
 }
 
+// 字体族常量
+const FONT_FAMILY_CN = "'WenQuanYi Zen Hei','Noto Sans CJK','DejaVu Sans','Noto Sans',sans-serif";
+const FONT_FAMILY_EN = "'DejaVu Sans','Noto Sans','WenQuanYi Zen Hei',sans-serif";
+
 export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     Name: string,
     Icon: string,
@@ -63,10 +67,8 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     Rarity: number,
     CanBeHq: number
 }, saleInfo: MarketBoardCurrentDataResponse): Promise<Buffer> {
-    const { Canvas, loadImage, FontLibrary } = koishiCtx.skia;
+    const { Canvas, loadImage } = koishiCtx.skia;
     
-    if (!FontLibrary.has("Georgia")) FontLibrary.use("Georgia", path.join(__root_dir, "/public/fonts/Georgia.ttf"));
-    if (!FontLibrary.has("WenquanyiZhengHei")) FontLibrary.use("WenquanyiZhengHei", path.join(__root_dir, "/public/fonts/WenquanyiZhengHei.ttf"));
     const width = 720, height = 960;
     const top = 16, bottom = 16,
         left = 16, right = 16,
@@ -106,7 +108,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const itemName = itemInfo.Name;
     const itemNameFontSize = 28;
     ctx.fillStyle = getRarityColor(itemInfo.Rarity);
-    ctx.font = `${itemNameFontSize}px WenquanyiZhengHei, Georgia, Arial, sans-serif`;
+    ctx.font = `${itemNameFontSize}px ${FONT_FAMILY_CN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemName,
@@ -120,7 +122,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     ctx.save();
     const itemDesc = `${itemInfo.ItemKind.Name} | ${itemInfo.ItemSearchCategory.Name} | 品级${itemInfo.LevelItem}`
     ctx.fillStyle = "rgb(120, 120, 120)"; // 更深的灰色，在白色背景上有更好对比度
-    ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+    ctx.font = `18px ${FONT_FAMILY_CN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemDesc,
@@ -139,7 +141,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     const fetchTargetName: string = (fetchTargetType === "world") ? saleInfo.worldName : (fetchTargetType === "dc") ? saleInfo.dcName : (fetchTargetType === "region") ? saleInfo.regionName : "未知";
     const itemLastUpdateDesc = `${fetchTargetName}${(fetchTargetType === "dc") ? "区" : ""} | 最后更新于${toCurrentTimeDifference(new Date(saleInfo.lastUploadTime), true)}（${new Date(saleInfo.lastUploadTime).toLocaleString("zh-CN", { hour12: false })}）`;
     ctx.fillStyle = "rgb(220, 220, 220)"; // 更亮的灰色，在渐变背景中部有更好可读性
-    ctx.font = "14px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+    ctx.font = `14px ${FONT_FAMILY_CN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(itemLastUpdateDesc,
@@ -158,7 +160,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+    ctx.font = `12px ${FONT_FAMILY_CN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
@@ -168,7 +170,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
     ctx.save();
     ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.font = "9px Georgia, WenquanyiZhengHei, Arial, sans-serif";
+    ctx.font = `9px ${FONT_FAMILY_EN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.textWrap = false;
@@ -247,7 +249,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         "本插件作者（或开发团体）与cafemaker、universalis和《最终幻想14》的开发与发行公司无任何直接联系。\n" +
         "作者（或开发团体）不对您使用本功能带来的一切可能的后果承担任何责任。"
     ctx.fillStyle = "rgb(160, 160, 160)"; // 更亮的灰色，在深色背景底部有更好可读性
-    ctx.font = "10px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+    ctx.font = `10px ${FONT_FAMILY_CN}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.textWrap = true;
@@ -269,9 +271,9 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
     
     // 预先计算文本高度来确定条目高度
     ctx.save();
-    ctx.font = "26px Georgia, WenquanyiZhengHei, Arial, sans-serif"; // 价格数字字体更大
+    ctx.font = `26px ${FONT_FAMILY_EN}`; // 价格数字字体更大
     const priceLineHeight = safeGetTextHeight(ctx.measureText("测试"), 26);
-    ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif"; // 服务器信息字体更小
+    ctx.font = `12px ${FONT_FAMILY_CN}`; // 服务器信息字体更小
     const serverLineHeight = safeGetTextHeight(ctx.measureText("测试"), 12);
     ctx.restore();
     
@@ -296,7 +298,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         const priceLineBottom = drawPosTop + priceLineHeight;
         
         // 价格数字 - 最大最突出
-        ctx.font = "26px Georgia, WenquanyiZhengHei, Arial, sans-serif";
+        ctx.font = `26px ${FONT_FAMILY_EN}`;
         ctx.fillStyle = "rgb(255, 255, 255)";
         const priceNumber = `${toReadableNum(item.pricePerUnit)}`;
         const priceNumberMeasure = ctx.measureText(priceNumber);
@@ -306,7 +308,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         drawPosLeft += priceNumberWidth + duration / 2;
         
         // Gil单位 - 稍小字体，底部对齐
-        ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+        ctx.font = `18px ${FONT_FAMILY_EN}`;
         ctx.fillStyle = "rgb(220, 220, 220)";
         const priceUnit = "Gil/个";
         const priceUnitMeasure = ctx.measureText(priceUnit);
@@ -327,7 +329,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
         drawPosLeft += duration;
 
         // 数量文字 - 中等大小，底部对齐
-        ctx.font = "18px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+        ctx.font = `18px ${FONT_FAMILY_CN}`;
         const itemQuantityText = `${toReadableNum(item.quantity)}个`;
         const itemQuantityTextWidth = ctx.measureText(itemQuantityText).width;
         ctx.fillText(itemQuantityText, drawPosLeft, priceLineBottom);
@@ -347,7 +349,7 @@ export async function drawItemPriceList(koishiCtx: Context, itemInfo: {
 
         // 服务器信息 - 最小字体，灰色显示，底部对齐
         ctx.fillStyle = "rgb(200, 200, 200)"; // 更亮的灰色，在渐变条纹背景上有更好对比度
-        ctx.font = "12px WenquanyiZhengHei, Georgia, Arial, sans-serif";
+        ctx.font = `12px ${FONT_FAMILY_CN}`;
         ctx.fillText(`${item.worldName || ""} | ${item.retainerName} | 信息上传于${toCurrentTimeDifference(new Date(item.lastReviewTime * 1000), true)}（${new Date(item.lastReviewTime * 1000).toLocaleString("zh-CN", { hour12: false })}）`, drawPosLeft, serverLineBottom)
 
         ctx.restore();
